@@ -103,6 +103,7 @@ class Env:
 
 class QTable:
 
+    
     def __init__(self, env:Env, actions:list):
         '''Create 3 dimensional list of size env.x_size, env.y_size, ACTIONS(4)'''
         self.qtable = [[[0 for k in range(len(actions))] for j in range(env.x_size)] for i in range(env.y_size)]
