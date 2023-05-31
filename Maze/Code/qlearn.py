@@ -1,4 +1,4 @@
-import random # TODO: Optimize memory for what functions called in random.
+from random import randrange, choice
 import sys
 
 
@@ -91,27 +91,28 @@ class Env:
 
     def row(self, y):
         return self.grid[y]
-
+    
     def random_state(self):
-        x = random.randrange(0, self.x_size)
-        y = random.randrange(0, self.y_size)
+        x = randrange(0, self.x_size)
+        y = randrange(0, self.y_size)
         while self.get(x, y) != ' ':
-            x = random.randrange(0, self.x_size)
-            y = random.randrange(0, self.y_size)
+            x = randrange(0, self.x_size)
+            y = randrange(0, self.y_size)
+
         return State(self, x, y)
 
 
 class QTable:
-
-
     def __init__(self, env:Env, actions:list):
         '''Create 3 dimensional list of size env.x_size, env.y_size, ACTIONS(4)'''
+
         self.env = env
         self.actions = actions
         self.qtable = [[[0 for k in range(len(actions))] for j in range(env.x_size)] for i in range(env.y_size)]
 
     def get_q(self, state:State, action:Action):
         '''Obtain the specific value of the q-table'''
+
         if action.name == "UP":
             action_index = 0
         elif action.name == "RIGHT":
@@ -125,11 +126,11 @@ class QTable:
 
     def get_q_row(self, state:State):
         ''' return the row of q table corresponding to the given state'''
-        # TODO: Check if this is what this function is asking me to do.
         return self.qtable[state.y][state.x]
 
-    def set_q(self, state:State, action:Action, val:float):
+    def set_q(self, state:State, action:Action, reward:float):
         '''set the value of the q table for the given state, action'''
+
         if action.name == "UP":
             action_index = 0
         elif action.name == "RIGHT":
@@ -139,45 +140,54 @@ class QTable:
         elif action.name == "LEFT":
             action_index = 3
         
-        self.qtable[state.y][state.x][action_index] = val
+        try:
+            self.qtable[state.y][state.x][action_index] = reward
+        except:
+            print(state.y)
+            print(state.x)
+            print(action_index)
+            self.qtable[state.y][state.x][action_index] = reward
 
     def learn_episode(self, alpha=.10, gamma=.90):
         '''with the given alpha and gamma values, learn q-values of a complete game'''
-        # from a random initial state,
-
-        # TODO: Figure out any bugs that might occur here with position initialization
-        self.state = State(self.env, 
-                           random.randint(self.env.x_size), 
-                           random.randint(self.env.y_size))
-
+        
+        # from a random initial state.
+        self.state = self.env.random_state()
+        
 
         while True:
-            if random.random > alpha:
-                # TODO: Implement find optimal move
-                pass
-            else:
-                # TODO: Choose move at random.
-                break
+            # Random Legal Actions
+            legal_moves = self.state.legal_actions(self.actions)
+            cur_action = choice(legal_moves)
+
+            # Execute action
+            past_state = self.state.clone()
+
+            self.state.execute(cur_action)
+
+            # Print State
+            print(self.state)
+
+            # Compute reward of action
+            # TODO: Make sure this equation is correct through studying.
+            reward = self.state.reward()
+            l = (1 - alpha)*self.get_q(past_state, cur_action)
+            r = alpha*(reward + gamma*max(self.get_q_row(self.state)))
+            q_value = l + r
+
+            # Update Q-table.
+            self.set_q(past_state, cur_action, q_value)
             
-            # TODO: Execute action
-            # TODO: Print State
-            # TODO: Compute reward of action
-            # TODO: Compute1 Reward
-            # TODO: Update Q-table.
-
-            # TODO Check if game is in finished state.
-            # TODO: If finished: break out of loop
-            # TODO: If not finished continue to the next game loop.
-
-
-        # consider a random legal action, execute that action,
-        # compute the reward, and update the q table for (state, action).
-        # repeat until an end state is reached (thus completing the episode)
-        # also print the state after each action
+            # Check if game is in finished state.
+            if self.state.at_end():
+                break # If finished: break out of loop
+            else: # If not finished continue to the next game loop
+                continue
     
     def learn(self, episodes:int, alpha=.10, gamma=.90):
         '''run <episodes> number of episodes for learning with the given alpha and gamma'''
-        pass
+        for _ in range(episodes):
+            self.learn_episode(alpha=alpha, gamma=gamma)
 
     def string_helper(self, value):
         if value == 0:
@@ -187,7 +197,6 @@ class QTable:
 
     def __str__(self):
         '''return a string for the q table as described in the assignment'''
-        # TODO: This is just a place holder
 
         output = ''
         labels = ["UP", "RIGHT", "DOWN", "LEFT"]
@@ -197,12 +206,9 @@ class QTable:
             for y in range(self.env.y_size):
                 output += "\n"
                 for x in range(self.env.x_size):
-                    output += (self.string_helper(self.qtable[y][x][i]) + "\t") # TODO: Test to make sure x and y are being indexed properly
+                    output += (str(self.string_helper(self.qtable[y][x][i])) + "\t")
 
         return output
-
-                
-
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
