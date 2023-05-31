@@ -103,9 +103,11 @@ class Env:
 
 class QTable:
 
-    
+
     def __init__(self, env:Env, actions:list):
         '''Create 3 dimensional list of size env.x_size, env.y_size, ACTIONS(4)'''
+        self.env = env
+        self.actions = actions
         self.qtable = [[[0 for k in range(len(actions))] for j in range(env.x_size)] for i in range(env.y_size)]
 
     def get_q(self, state:State, action:Action):
@@ -144,7 +146,6 @@ class QTable:
         # from a random initial state,
 
         # TODO: Figure out any bugs that might occur here with position initialization
-        # TODO: initalize state at random.
         self.state = State(self.env, 
                            random.randint(self.env.x_size), 
                            random.randint(self.env.y_size))
@@ -177,9 +178,31 @@ class QTable:
     def learn(self, episodes:int, alpha=.10, gamma=.90):
         '''run <episodes> number of episodes for learning with the given alpha and gamma'''
         pass
+
+    def string_helper(self, value):
+        if value == 0:
+            return '----'
+        else:
+            return round(value, 2)
+
     def __str__(self):
         '''return a string for the q table as described in the assignment'''
-        pass
+        # TODO: This is just a place holder
+
+        output = ''
+        labels = ["UP", "RIGHT", "DOWN", "LEFT"]
+
+        for i in range(4):
+            output += (labels[i] if i == 0 else ("\n" + labels[i]))
+            for y in range(self.env.y_size):
+                output += "\n"
+                for x in range(self.env.x_size):
+                    output += (self.string_helper(self.qtable[y][x][i]) + "\t") # TODO: Test to make sure x and y are being indexed properly
+
+        return output
+
+                
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
